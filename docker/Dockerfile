@@ -8,4 +8,4 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 EXPOSE 8888
 
-CMD ["python", "start.py"]
+CMD ["python", "server.py"]

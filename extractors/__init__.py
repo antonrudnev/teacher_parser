@@ -4,6 +4,9 @@ from extractors.emails import get_emails
 from extractors.names import get_names
 from extractors.context import get_context
 
+import nltk
+nltk.download("punkt")
+
 
 def extract_all(page_html, input_schools):
     html_features = get_html_features(page_html)

@@ -1,7 +1,6 @@
 from multiprocessing.pool import Pool
 from pymongo import MongoClient
 from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION
-from extractors import extract_all
 from time import time, localtime, strftime
 
 try:
@@ -11,6 +10,7 @@ try:
     import json
 except ImportError:
     PAGE_SERVER_URL = None
+    from extractors import extract_all
 
 
 def process_page_remotely(page_id, html, input_schools):

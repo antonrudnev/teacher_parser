@@ -4,7 +4,7 @@ MONGO_PORT = 27017
 MONGO_DATABASE = "TeacherDB"
 MONGO_COLLECTION = "pages"
 
-PAGE_SERVER_URL = "http://192.168.188.131:8888/"
+# PAGE_SERVER_URL = "http://192.168.188.131:8888/"
 
 
 EMAIL_PATTERN = r"[a-z0-9_.-]+@(?:[a-z0-9_-]+\.)+[a-z]+"

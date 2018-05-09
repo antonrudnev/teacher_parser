@@ -1,6 +1,6 @@
 from multiprocessing.pool import Pool
 from pymongo import MongoClient
-from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION
+from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION, MAX_PAGE_SIZE, PROCESS_NUM
 from time import time, localtime, strftime
 
 try:
@@ -46,9 +46,9 @@ def process_mongo_collection():
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         pages = coll.find({"html": {"$exists": True},
                            "body": {"$exists": True},
-                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, 1000000]}}).limit(5)
+                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}}).limit(5)
         pages_cnt = pages.count()
-        with Pool(3) as executor:
+        with Pool(PROCESS_NUM) as executor:
             executor.starmap(process_page,
                              ((page["_id"],
                                page["html"][0],

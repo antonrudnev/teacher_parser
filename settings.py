@@ -1,10 +1,10 @@
 # MONGO_HOST = "54.89.173.224"
-MONGO_HOST = "192.168.188.131"
+MONGO_HOST = "localhost"
 MONGO_PORT = 27017
-MONGO_DATABASE = "TeacherDB"
+MONGO_DATABASE = "teacher"
 MONGO_COLLECTION = "pages"
 
-# PAGE_SERVER_URL = "http://192.168.188.131:8888/"
+# PAGE_SERVER_URL = "http://localhost:8888/"
 
 
 EMAIL_PATTERN = r"[a-z0-9_.-]+@(?:[a-z0-9_-]+\.)+[a-z]+"
@@ -18,3 +18,6 @@ SCHOOL_NAME_EDGE_WORDS = ["A", "About", "After", "Also", "An", "As", "Before", "
 STANFORD_LNG_MODEL_PATH = "resources/stanford-ner-3.9.1/classifiers/english.all.3class.distsim.crf.ser.gz"
 STANFORD_NER_PATH = "resources/stanford-ner-3.9.1/stanford-ner.jar"
 NOT_A_NAME_DICTIONARY_PATH = "resources/not_a_name.dic"
+
+MAX_PAGE_SIZE = 4700000  # MacOS 16Gb RAM
+PROCESS_NUM = 3  # scaling factor

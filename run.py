@@ -68,7 +68,7 @@ def process_mongo_collection(workers_number):
     print("Parser is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
-        pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(10)
+        pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(0)
         pages_cnt = pages.count()
         with Pool(workers_number) as executor:
             executor.starmap(process_page,
@@ -85,9 +85,10 @@ def process_mongo_collection(workers_number):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="number of parallel workers to run")
+    parser.add_argument("-l", "--limit", type=int, default=0, help="specifies the amount of pages to process")
     parser.add_argument("--local", action="store_true", help="process pages locally")
     parser.add_argument("--resume", action="store_false", help="skip initialization and resume processing")
+    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="number of parallel workers to run")
     args = parser.parse_args()
     if args.local:
         from extractors import extract_all

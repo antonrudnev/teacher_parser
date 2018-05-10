@@ -73,8 +73,6 @@ def process_mongo_collection(workers_number):
 
 
 if __name__ == "__main__":
-    start_time = time()
-    print(strftime("%d %b %Y %H:%M:%S", localtime(start_time)))
     parser = argparse.ArgumentParser()
     parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="number of parallel workers to run")
     parser.add_argument("--local", action="store_true", help="process pages locally")
@@ -85,8 +83,10 @@ if __name__ == "__main__":
         PAGE_SERVER_URL = None
     if args.resume:
         init_mongo_collection()
+    start_time = time()
+    print("Parser is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     process_mongo_collection(args.workers)
     print("Done")
     end_time = time()
-    print(strftime("%d %b %Y %H:%M:%S", localtime(end_time)))
+    print("Parser is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
     print("{:.4f}min".format((end_time - start_time) / 60))

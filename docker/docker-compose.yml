@@ -7,13 +7,13 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-      - "8888:8888"
+      - "28888:8888"
     networks:
       - webnet
   visualizer:
     image: dockersamples/visualizer:stable
     ports:
-      - "8080:8080"
+      - "28080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:

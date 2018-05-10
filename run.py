@@ -1,6 +1,7 @@
+import argparse
 from multiprocessing.pool import Pool
 from pymongo import MongoClient
-from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION, MAX_PAGE_SIZE, PROCESS_NUM
+from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION, MAX_PAGE_SIZE, WORKERS
 from time import time, localtime, strftime
 
 try:
@@ -41,14 +42,14 @@ def process_page(page_id, html, input_schools, page_number, pages_cnt):
             print(e)
 
 
-def process_mongo_collection():
+def process_mongo_collection(workers_number):
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         pages = coll.find({"html": {"$exists": True},
                            "body": {"$exists": True},
-                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}}).limit(5)
+                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}}).limit(10)
         pages_cnt = pages.count()
-        with Pool(PROCESS_NUM) as executor:
+        with Pool(workers_number) as executor:
             executor.starmap(process_page,
                              ((page["_id"],
                                page["html"][0],
@@ -59,9 +60,13 @@ def process_mongo_collection():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="the exponent")
+    args = parser.parse_args()
+
     start_time = time()
     print(strftime("%d %b %Y %H:%M:%S", localtime(start_time)))
-    process_mongo_collection()
+    process_mongo_collection(args.workers)
     print("Done")
     end_time = time()
     print(strftime("%d %b %Y %H:%M:%S", localtime(end_time)))

@@ -3,11 +3,7 @@ services:
   web:
     image: antonrudnev/teacherdb:server
     deploy:
-      replicas: 5
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 100M
+      replicas: 3
       restart_policy:
         condition: on-failure
     ports:

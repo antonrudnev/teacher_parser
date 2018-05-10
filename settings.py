@@ -1,10 +1,10 @@
-# MONGO_HOST = "54.89.173.224"
-MONGO_HOST = "localhost"
+MONGO_HOST = "54.89.173.224"
+# MONGO_HOST = "localhost"
 MONGO_PORT = 27017
-MONGO_DATABASE = "teacher"
+MONGO_DATABASE = "TeacherDB"
 MONGO_COLLECTION = "pages"
 
-# PAGE_SERVER_URL = "http://localhost:8888/"
+PAGE_SERVER_URL = "http://192.168.188.131:8888/"
 
 
 EMAIL_PATTERN = r"[a-z0-9_.-]+@(?:[a-z0-9_-]+\.)+[a-z]+"

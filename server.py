@@ -8,6 +8,9 @@ class PageHandler(tornado.web.RequestHandler):
     def data_received(self, chunk):
         pass
 
+    def get(self):
+        self.write("Page server is up and running.")
+
     def post(self):
         page_id = self.get_body_argument("page_id")
         page_html = self.get_body_argument("html")

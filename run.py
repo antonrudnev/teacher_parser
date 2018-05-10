@@ -75,6 +75,7 @@ def init_mongo_collection():
                          {"$set": {"parser_status": "not_processed"}})
         logger.info("Index build...")
         coll.create_index([("parser_status", ASCENDING)])
+        logger.info("Reindexing...")
         coll.reindex()
     end_time = time()
     logger.info("Collection initialization is finished in {:.3f} minutes".format((end_time - start_time) / 60))

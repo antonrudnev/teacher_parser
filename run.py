@@ -25,7 +25,7 @@ def process_page_remotely(page_id, html, input_schools):
     return features
 
 
-def process_page(page_id, html, input_schools, page_number, pages_cnt):
+def process_page(page_id, html, input_schools, page_number, pages_limit, pages_count):
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         try:
@@ -36,10 +36,14 @@ def process_page(page_id, html, input_schools, page_number, pages_cnt):
             coll.update_one({"_id": page_id},
                             {"$set": {"parsed_features": features,
                                       "parser_status": "success"}})
-            print("Document {} from {} is processed".format(page_number, pages_cnt))
+            print("Document {} from {} is processed {}".
+                  format(page_number, pages_count,
+                         "({} limit)".format(pages_limit) if pages_limit else ""))
         except Exception as e:
             coll.update_one({"_id": page_id}, {"$set": {"parser_status": "failed"}})
-            print("Document {} from {} is failed".format(page_number, pages_cnt))
+            print("Document {} from {} is failed {}".
+                  format(page_number, pages_count,
+                         "({} limit)".format(pages_limit) if pages_limit else ""))
             print(e)
 
 
@@ -69,14 +73,15 @@ def process_mongo_collection(workers_number, pages_limit):
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(pages_limit)
-        pages_cnt = pages.count()
+        pages_count = pages.count()
         with Pool(workers_number) as executor:
             executor.starmap(process_page,
                              ((page["_id"],
                                page["html"][0],
                                page["schoolnames"][0].split(";"),
                                i + 1,
-                               pages_cnt,) for i, page in enumerate(pages)))
+                               pages_limit,
+                               pages_count,) for i, page in enumerate(pages)))
         print("All pages are processed")
     end_time = time()
     print("Parser is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))

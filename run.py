@@ -63,12 +63,12 @@ def init_mongo_collection():
     print("{:.4f}min".format((end_time - start_time) / 60))
 
 
-def process_mongo_collection(workers_number):
+def process_mongo_collection(workers_number, pages_limit):
     start_time = time()
     print("Parser is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
-        pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(0)
+        pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(pages_limit)
         pages_cnt = pages.count()
         with Pool(workers_number) as executor:
             executor.starmap(process_page,
@@ -95,4 +95,4 @@ if __name__ == "__main__":
         PAGE_SERVER_URL = None
     if args.resume:
         init_mongo_collection()
-    process_mongo_collection(args.workers)
+    process_mongo_collection(args.workers, args.limit)

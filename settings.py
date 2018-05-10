@@ -1,5 +1,5 @@
-MONGO_HOST = "54.89.173.224"
-# MONGO_HOST = "localhost"
+# MONGO_HOST = "54.89.173.224"
+MONGO_HOST = "localhost"
 MONGO_PORT = 27017
 MONGO_DATABASE = "teacher_db"
 MONGO_COLLECTION = "pages"

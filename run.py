@@ -61,9 +61,8 @@ def process_mongo_collection(workers_number):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="the exponent")
+    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="number of parallel workers to run")
     args = parser.parse_args()
-
     start_time = time()
     print(strftime("%d %b %Y %H:%M:%S", localtime(start_time)))
     process_mongo_collection(args.workers)

@@ -58,6 +58,7 @@ def init_mongo_collection():
         print("Pages preselection...")
         coll.update_many({"html": {"$exists": True},
                           "body": {"$exists": True},
+                          "schoolnames": {"$exists": True},
                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}},
                          {"$set": {"parser_status": "not_processed"}})
         print("Index build...")

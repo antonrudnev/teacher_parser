@@ -10,8 +10,9 @@ try:
     from urllib.parse import urlencode
     import json
 except ImportError:
-    PAGE_SERVER_URL = None
     from extractors import extract_all
+
+    PAGE_SERVER_URL = None
 
 
 def process_page_remotely(page_id, html, input_schools):
@@ -34,20 +35,32 @@ def process_page(page_id, html, input_schools, page_number, pages_cnt):
                 features = extract_all(html, input_schools)
             coll.update_one({"_id": page_id},
                             {"$set": {"parsed_features": features,
-                                      "parser_status": "ok"}})
+                                      "parser_status": "success"}})
             print("Document {} from {} is processed".format(page_number, pages_cnt))
         except Exception as e:
-            coll.update_one({"_id": page_id}, {"$set": {"parser_status": "fail"}})
+            coll.update_one({"_id": page_id}, {"$set": {"parser_status": "failed"}})
             print("Document {} from {} is failed".format(page_number, pages_cnt))
             print(e)
+
+
+def init_mongo_collection():
+    print("Collection initialization is started")
+    with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
+        coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
+        coll.update_many({"parser_status": {"$exists": True}},
+                         {"$unset": {"parser_status": 1}})
+        coll.update_many({"html": {"$exists": True},
+                          "body": {"$exists": True},
+                          "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}},
+                         {"$set": {"parser_status": "not_processed"}})
+        coll.create_index([("parser_status", 1)])
+    print("Collection initialization is finished")
 
 
 def process_mongo_collection(workers_number):
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
-        pages = coll.find({"html": {"$exists": True},
-                           "body": {"$exists": True},
-                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}}).limit(10)
+        pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(10)
         pages_cnt = pages.count()
         with Pool(workers_number) as executor:
             executor.starmap(process_page,
@@ -60,11 +73,18 @@ def process_mongo_collection(workers_number):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="number of parallel workers to run")
-    args = parser.parse_args()
     start_time = time()
     print(strftime("%d %b %Y %H:%M:%S", localtime(start_time)))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--workers", type=int, default=WORKERS, help="number of parallel workers to run")
+    parser.add_argument("--local", action="store_true", help="process pages locally")
+    parser.add_argument("--resume", action="store_false", help="skip initialization and resume processing")
+    args = parser.parse_args()
+    if args.local:
+        from extractors import extract_all
+        PAGE_SERVER_URL = None
+    if args.resume:
+        init_mongo_collection()
     process_mongo_collection(args.workers)
     print("Done")
     end_time = time()

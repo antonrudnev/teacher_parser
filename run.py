@@ -48,12 +48,15 @@ def init_mongo_collection():
     print("Collection initialization is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
+        print("Status reset...")
         coll.update_many({"parser_status": {"$exists": True}},
                          {"$unset": {"parser_status": 1}})
+        print("Pages preselection...")
         coll.update_many({"html": {"$exists": True},
                           "body": {"$exists": True},
                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}},
                          {"$set": {"parser_status": "not_processed"}})
+        print("Index build...")
         coll.create_index([("parser_status", 1)])
     end_time = time()
     print("Collection initialization is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
@@ -92,4 +95,3 @@ if __name__ == "__main__":
     if args.resume:
         init_mongo_collection()
     process_mongo_collection(args.workers)
-    print("Done")

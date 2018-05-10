@@ -2,7 +2,7 @@ import argparse
 import logging
 from time import time
 from multiprocessing.pool import Pool
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION, MAX_PAGE_SIZE, WORKERS
 
 try:
@@ -74,7 +74,8 @@ def init_mongo_collection():
                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}},
                          {"$set": {"parser_status": "not_processed"}})
         logger.info("Index build...")
-        coll.create_index([("parser_status", 1)])
+        coll.create_index([("parser_status", ASCENDING)])
+        coll.reindex()
     end_time = time()
     logger.info("Collection initialization is finished in {:.3f} minutes".format((end_time - start_time) / 60))
 

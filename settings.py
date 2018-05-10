@@ -1,7 +1,7 @@
-# MONGO_HOST = "54.89.173.224"
-MONGO_HOST = "localhost"
+MONGO_HOST = "54.89.173.224"
+# MONGO_HOST = "localhost"
 MONGO_PORT = 27017
-MONGO_DATABASE = "TeacherDB"
+MONGO_DATABASE = "teacher_db"
 MONGO_COLLECTION = "pages"
 
 PAGE_SERVER_URL = "http://ec2-52-90-158-67.compute-1.amazonaws.com:28888/"

@@ -1,8 +1,9 @@
 import argparse
+import logging
+from time import time
 from multiprocessing.pool import Pool
 from pymongo import MongoClient
 from settings import MONGO_HOST, MONGO_PORT, MONGO_DATABASE, MONGO_COLLECTION, MAX_PAGE_SIZE, WORKERS
-from time import time, localtime, strftime
 
 try:
     from settings import PAGE_SERVER_URL
@@ -11,8 +12,19 @@ try:
     import json
 except ImportError:
     from extractors import extract_all
-
     PAGE_SERVER_URL = None
+
+
+logger = logging.getLogger("parser")
+logger.setLevel(logging.INFO)
+logger.propagate = False
+fh = logging.FileHandler("parser.log", mode="w")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 def process_page_remotely(page_id, html, input_schools):
@@ -36,41 +48,40 @@ def process_page(page_id, html, input_schools, page_number, pages_limit, pages_c
             coll.update_one({"_id": page_id},
                             {"$set": {"parsed_features": features,
                                       "parser_status": "success"}})
-            print("Document {} from {} is processed {}".
-                  format(page_number, pages_count,
-                         "({} limit)".format(pages_limit) if pages_limit else ""))
+            logger.info("Document {} from {} is processed {}".
+                        format(page_number, pages_count,
+                               "({} limit)".format(pages_limit) if pages_limit else ""))
         except Exception as e:
             coll.update_one({"_id": page_id}, {"$set": {"parser_status": "failed"}})
-            print("Document {} from {} is failed {}".
-                  format(page_number, pages_count,
-                         "({} limit)".format(pages_limit) if pages_limit else ""))
-            print(e)
+            logger.error("Document {} from {} is failed {}".
+                         format(page_number, pages_count,
+                                "({} limit)".format(pages_limit) if pages_limit else ""))
+            logger.error(e)
 
 
 def init_mongo_collection():
     start_time = time()
-    print("Collection initialization is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
+    logger.info("Collection initialization is started")
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
-        print("Status reset...")
+        logger.info("Status reset...")
         coll.update_many({"parser_status": {"$exists": True}},
                          {"$unset": {"parser_status": 1}})
-        print("Pages preselection...")
+        logger.info("Pages preselection...")
         coll.update_many({"html": {"$exists": True},
                           "body": {"$exists": True},
                           "schoolnames": {"$exists": True},
                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}},
                          {"$set": {"parser_status": "not_processed"}})
-        print("Index build...")
+        logger.info("Index build...")
         coll.create_index([("parser_status", 1)])
     end_time = time()
-    print("Collection initialization is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
-    print("{:.4f}min".format((end_time - start_time) / 60))
+    logger.info("Collection initialization is finished in {:.3f} minutes".format((end_time - start_time) / 60))
 
 
 def process_mongo_collection(workers_number, pages_limit):
     start_time = time()
-    print("Parser is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
+    logger.info("Parser is started")
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(pages_limit)
@@ -83,10 +94,8 @@ def process_mongo_collection(workers_number, pages_limit):
                                i + 1,
                                pages_limit,
                                pages_count,) for i, page in enumerate(pages)))
-        print("All pages are processed")
     end_time = time()
-    print("Parser is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
-    print("{:.4f}min".format((end_time - start_time) / 60))
+    logger.info("Parser is finished in {:.3f} minutes".format((end_time - start_time) / 60))
 
 
 if __name__ == "__main__":

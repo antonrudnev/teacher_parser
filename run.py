@@ -44,7 +44,8 @@ def process_page(page_id, html, input_schools, page_number, pages_cnt):
 
 
 def init_mongo_collection():
-    print("Collection initialization is started")
+    start_time = time()
+    print("Collection initialization is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         coll.update_many({"parser_status": {"$exists": True}},
@@ -54,10 +55,14 @@ def init_mongo_collection():
                           "$expr": {"$lt": [{"$strLenCP": {"$arrayElemAt": ["$html", 0]}}, MAX_PAGE_SIZE]}},
                          {"$set": {"parser_status": "not_processed"}})
         coll.create_index([("parser_status", 1)])
-    print("Collection initialization is finished")
+    end_time = time()
+    print("Collection initialization is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
+    print("{:.4f}min".format((end_time - start_time) / 60))
 
 
 def process_mongo_collection(workers_number):
+    start_time = time()
+    print("Parser is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(10)
@@ -70,6 +75,9 @@ def process_mongo_collection(workers_number):
                                i + 1,
                                pages_cnt,) for i, page in enumerate(pages)))
         print("All pages are processed")
+    end_time = time()
+    print("Parser is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
+    print("{:.4f}min".format((end_time - start_time) / 60))
 
 
 if __name__ == "__main__":
@@ -83,10 +91,5 @@ if __name__ == "__main__":
         PAGE_SERVER_URL = None
     if args.resume:
         init_mongo_collection()
-    start_time = time()
-    print("Parser is started at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(start_time))))
     process_mongo_collection(args.workers)
     print("Done")
-    end_time = time()
-    print("Parser is finished at {}".format(strftime("%d %b %Y %H:%M:%S", localtime(end_time))))
-    print("{:.4f}min".format((end_time - start_time) / 60))

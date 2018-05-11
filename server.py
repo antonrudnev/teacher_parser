@@ -9,7 +9,7 @@ class PageHandler(tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.write("Page server is up and running.")
+        self.write("<h1>Page server is up and running</h1>")
 
     def post(self):
         page_id = self.get_body_argument("page_id")

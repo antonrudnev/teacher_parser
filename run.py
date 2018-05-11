@@ -12,8 +12,8 @@ try:
     import json
 except ImportError:
     from extractors import extract_all
-    PAGE_SERVER_URL = None
 
+    PAGE_SERVER_URL = None
 
 logger = logging.getLogger("parser")
 logger.setLevel(logging.INFO)
@@ -37,25 +37,25 @@ def process_page_remotely(page_id, html, input_schools):
     return features
 
 
-def process_page(page_id, html, input_schools, page_number, pages_limit, pages_count):
+def process_page(parameters):
     with MongoClient(MONGO_HOST, MONGO_PORT) as conn:
         coll = conn[MONGO_DATABASE][MONGO_COLLECTION]
         try:
             if PAGE_SERVER_URL:
-                features = process_page_remotely(page_id, html, input_schools)
+                features = process_page_remotely(parameters["id"], parameters["html"], parameters["input_schools"])
             else:
-                features = extract_all(html, input_schools)
-            coll.update_one({"_id": page_id},
+                features = extract_all(parameters["html"], parameters["input_schools"])
+            coll.update_one({"_id": parameters["id"]},
                             {"$set": {"parsed_features": features,
                                       "parser_status": "success"}})
             logger.info("Document {} from {} is processed {}".
-                        format(page_number, pages_count,
-                               "({} limit)".format(pages_limit) if pages_limit else ""))
+                        format(parameters["page_number"], parameters["pages_count"],
+                               "({} limit)".format(parameters["pages_limit"]) if parameters["pages_limit"] else ""))
         except Exception as e:
-            coll.update_one({"_id": page_id}, {"$set": {"parser_status": "failed"}})
+            coll.update_one({"_id": parameters["id"]}, {"$set": {"parser_status": "failed"}})
             logger.error("Document {} from {} is failed {}".
-                         format(page_number, pages_count,
-                                "({} limit)".format(pages_limit) if pages_limit else ""))
+                         format(parameters["page_number"], parameters["pages_count"],
+                                "({} limit)".format(parameters["pages_limit"]) if parameters["pages_limit"] else ""))
             logger.error(e)
 
 
@@ -89,13 +89,14 @@ def process_mongo_collection(workers_number, pages_limit):
         pages = coll.find({"parser_status": {"$in": ["not_processed", "failed"]}}).limit(pages_limit)
         pages_count = pages.count()
         with Pool(workers_number) as executor:
-            executor.starmap(process_page,
-                             ((page["_id"],
-                               page["html"][0],
-                               page["schoolnames"][0].split(";"),
-                               i + 1,
-                               pages_limit,
-                               pages_count,) for i, page in enumerate(pages)))
+            for _ in executor.imap_unordered(process_page,
+                                             ({"id": page["_id"],
+                                               "html": page["html"][0],
+                                               "input_schools": page["schoolnames"][0].split(";"),
+                                               "page_number": i + 1,
+                                               "pages_limit": pages_limit,
+                                               "pages_count": pages_count} for i, page in enumerate(pages))):
+                pass
     end_time = time()
     logger.info("Parser is finished in {:.3f} minutes".format((end_time - start_time) / 60))
 
@@ -109,6 +110,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.local:
         from extractors import extract_all
+
         PAGE_SERVER_URL = None
     if args.resume:
         init_mongo_collection()

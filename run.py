@@ -12,7 +12,6 @@ try:
     import json
 except ImportError:
     from extractors import extract_all
-
     PAGE_SERVER_URL = None
 
 logger = logging.getLogger("parser")
@@ -110,7 +109,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.local:
         from extractors import extract_all
-
         PAGE_SERVER_URL = None
     if args.resume:
         init_mongo_collection()

@@ -21,3 +21,4 @@ NOT_A_NAME_DICTIONARY_PATH = "resources/not_a_name.dic"
 
 MAX_PAGE_SIZE = 4700000  # MacOS 16Gb RAM
 WORKERS = 3  # scaling factor
+MIN_CONF_EXPORT = 0.3  # default threshold for confidence score to export
